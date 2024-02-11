@@ -6,11 +6,8 @@
 	import Combox from '$lib/components/combobox/combox.svelte';
 	import PageTitle from '$lib/shared/page-title.svelte';
 	import SheetInputs from '$lib/components/sheet-inputs/sheet-inputs.svelte';
-	import Button from '$lib/shared/button.svelte';
 	import { addLocationByGroupId, getAllLocationGroups } from '$lib/API';
 	import { onMount } from 'svelte';
-
-	let isAddingLocation = false;
 
 	let currentLocation = {
 		location_group_id: 0,
@@ -25,10 +22,7 @@
 		{ key: 'city', label: 'Місто', value: '' }
 	];
 
-	const updateInputListLocation = (
-		value,
-		type
-	) => {
+	const updateInputListLocation = (value, type) => {
 		currentLocation = {
 			...currentLocation,
 			[type]: value
@@ -62,7 +56,6 @@
 			if (response.success) {
 				const location_groups = response.message;
 
-				// @ts-ignore
 				locationGroupsStore.setLocationGroups(location_groups);
 			} else if (response.status === 204) {
 				return { location_groups: [] };
@@ -76,15 +69,15 @@
 	<Navbar type="bots" />
 	<div class="flex flex-row gap-2">
 		<PageTitle title="Керування локаціями" />
-		<Button
-			title={!isAddingLocation ? '+' : '-'}
-			type={'button'}
-			disabled={false}
-			style={'rounded-submit'}
-			handler={() => (isAddingLocation = !isAddingLocation)}
-		/>
 	</div>
-	{#if $locationGroupsStore && isAddingLocation}
+	<SheetInputs
+		buttonText="+"
+		title="Нова локація"
+		description="Заповніть поля стосовно нової локації"
+		inputList={newLocationInputList}
+		originalData={currentLocation}
+		onSubmit={submitNewLocation}
+	>
 		<Combox
 			list={$locationGroupsStore}
 			key={'location_group_id'}
@@ -92,16 +85,5 @@
 			title="Домен для парсингу"
 			addItem={(value) => updateInputListLocation(value, 'location_group_id')}
 		/>
-
-		{#if currentLocation.location_group_id}
-			<SheetInputs
-				buttonText="Додати опис локації"
-				title="Нова локація"
-				description="Заповніть поля стосовно нової локації"
-				inputList={newLocationInputList}
-				originalData={currentLocation}
-				onSubmit={submitNewLocation}
-			/>
-		{/if}
-	{/if}
+	</SheetInputs>
 </div>

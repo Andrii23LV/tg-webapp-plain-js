@@ -1,5 +1,5 @@
 <script>
-	export let title;
+	export let title = null;
 	export let handler;
 	export let disabled;
 	export let style;

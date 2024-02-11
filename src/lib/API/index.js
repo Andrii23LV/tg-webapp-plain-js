@@ -49,7 +49,7 @@ const sendRequest = async (
 
 		return { success: true, message: await response.json(), status: response.status };
 	} catch (error) {
-		console.error('Error during request:', error.message);
+		console.log('Error during request:', error.message);
 		return { success: false, message: error.message };
 	}
 };

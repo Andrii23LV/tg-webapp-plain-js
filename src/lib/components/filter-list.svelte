@@ -1,10 +1,12 @@
 <script>
-	import { onMount } from 'svelte';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Select from '$lib/components/ui/select';
 	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+
 	import FilterIcon from '../shared/assets/filter.svelte';
 
+	export let onFilterList;
 	export let filterText;
 	export let filterType;
 	export let changeFilterText;
@@ -23,9 +25,9 @@
 	>
 		<FilterIcon />
 	</Popover.Trigger>
-	<Popover.Content class="flex w-[360px] flex-col items-center gap-2">
+	<Popover.Content class="flex w-[340px] flex-col items-center gap-2">
 		<Select.Root portal={null} onSelectedChange={(event) => changeFilterType(event.value)}>
-			<Select.Trigger>
+			<Select.Trigger class="flex">
 				<Select.Value placeholder="Фільтр за типом..." />
 			</Select.Trigger>
 			<Select.Content>
@@ -45,6 +47,9 @@
 				placeholder="Пошук за типом фільтру"
 				on:input={(event) => changeFilterText(event.target.value)}
 			/>
+		{/if}
+		{#if filterType && filterText}
+			<Button on:click={onFilterList} type="submit" disabled={!filterText}>Зберегти зміни</Button>
 		{/if}
 	</Popover.Content>
 </Popover.Root>

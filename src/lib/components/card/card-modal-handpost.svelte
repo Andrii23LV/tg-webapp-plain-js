@@ -11,7 +11,6 @@
 
 	import { convertUserInputPhone } from '$lib/utils/convertUserInputPhone';
 
-	export let onFormDataChange;
 	export let channel;
 	export let onHandPost;
 
@@ -35,12 +34,6 @@
 				reader.readAsDataURL(file);
 
 				image = file;
-
-				onFormDataChange({
-					text,
-					image,
-					contacts
-				});
 			} else {
 				alert('Please upload a valid image file (JPEG, JPG, or PNG)');
 			}
@@ -50,11 +43,6 @@
 	const handleTextChange = (event) => {
 		const newText = event.target.value;
 		text = newText;
-		onFormDataChange({
-			text: newText,
-			image,
-			contacts
-		});
 	};
 
 	const handleContactChange = (event) => {
@@ -73,12 +61,6 @@
 			];
 			selectedContact = '';
 			contactValue = '';
-
-			onFormDataChange({
-				text,
-				image,
-				contacts
-			});
 		}
 	};
 
@@ -90,7 +72,11 @@
 		const updatedContacts = [...contacts];
 		updatedContacts.splice(index, 1);
 		contacts = updatedContacts;
-		onFormDataChange({ text, image, contacts });
+	};
+
+	const handleHandPost = () => {
+		const formData = { contacts, image, text };
+		onHandPost(channel.id, formData);
 	};
 </script>
 
@@ -133,7 +119,7 @@
 		{/if}
 		<ModalFormJobTextarea {text} {handleTextChange} />
 		<Dialog.Footer class="m-auto mt-2 flex">
-			<Button type="submit" style="submit">Підвердити</Button>
+			<Button type="submit" style="submit" handler={handleHandPost}>Підвердити</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

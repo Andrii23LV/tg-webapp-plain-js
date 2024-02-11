@@ -13,8 +13,6 @@
 
 	import { botStore } from '$lib/stores.js';
 
-	let inputText = '';
-
 	let newBot = {
 		username: '',
 		token: ''
@@ -24,10 +22,6 @@
 		{ key: 'username', label: 'Username бота', value: '' },
 		{ key: 'token', label: 'Токен бота', value: '' }
 	];
-
-	const handleInputChange = (text) => {
-		inputText = text;
-	};
 
 	const submitBotForm = async () => {
 		if (newBot.username && newBot.token) {
@@ -71,7 +65,6 @@
 			if (response.success) {
 				const bots = response.message;
 
-				// @ts-ignore
 				botStore.setBots(bots);
 			} else if (!response.success) {
 				botStore.setBots([]);
@@ -93,6 +86,6 @@
 		onSubmit={submitBotForm}
 	/>
 	{#if $botStore.length}
-		<CardBotList list={$botStore} deleteCard={handleDeleteBot} {inputText} />
+		<CardBotList list={$botStore} deleteChannel={handleDeleteBot} />
 	{/if}
 </div>

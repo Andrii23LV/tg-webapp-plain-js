@@ -44,6 +44,7 @@
 			<Sheet.Description>{description}</Sheet.Description>
 		</Sheet.Header>
 		<div class="grid gap-4 py-4">
+			<div class="m-auto"><slot /></div>
 			{#each inputList as { key, label, value }, index}
 				<div class="grid grid-cols-4 items-center gap-4">
 					<Label for={key} class="text-right">{label}</Label>

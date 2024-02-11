@@ -2,22 +2,12 @@
 
 <script>
 	import { goto } from '$app/navigation';
-
-	import ToolbarInput from './toolbar-input.svelte';
 	import Icon from '$lib/shared/icon.svelte';
 	import Button from '$lib/shared/button.svelte';
 
-	let isSearchInputVisible = false;
-
 	export let type;
-	export let inputText;
 	export let selectedList = [];
-	export let onAutoPostList;
-	export let onInputChange;
-
-	function toggleSearchInput() {
-		isSearchInputVisible = !isSearchInputVisible;
-	}
+	export let toggleChannelsAutoPost;
 </script>
 
 <div
@@ -29,7 +19,7 @@
 		</a>
 
 		<Button
-			handler={() => onAutoPostList(selectedList, undefined)}
+			handler={() => toggleChannelsAutoPost(selectedList, type === 'main' ? true : false)}
 			disabled={selectedList?.length ? false : true}
 			title={type === 'main'
 				? `Авто-постинг для ${selectedList?.length}`
@@ -47,11 +37,5 @@
 				<Icon type="channels" />
 			</a>
 		{/if}
-
-		<!-- <button type="button" on:click={toggleSearchInput}><Icon type="search" /></button> -->
 	</div>
-
-	{#if isSearchInputVisible}
-		<ToolbarInput {inputText} {onInputChange} />
-	{/if}
 </div>

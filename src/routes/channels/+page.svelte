@@ -224,6 +224,7 @@
 		toggleAutoposting,
 		addChannel,
 		getLocationByLocationGroup,
+		getChannelsFilteredBy,
 		getChannels,
 		getBots,
 		deleteChannel,
@@ -233,41 +234,23 @@
 	import Toolbar from '$lib/components/toolbar/toolbar.svelte';
 	import CardList from '$lib/components/card-list/card-list.svelte';
 	import PageTitle from '$lib/shared/page-title.svelte';
-	import ModalAddChannel from '../../lib/components/modal-add-channel/modal-add-channel.svelte';
-	import SwitchListType from '../../lib/components/switch-list-type.svelte';
-	import FilterList from '../../lib/components/filter-list.svelte';
-
-	// import playAudio from '$lib/components/ui/audio/audio.js';
+	import ModalAddChannel from '$lib/components/modal-add-channel/modal-add-channel.svelte';
+	import SwitchListType from '$lib/components/switch-list-type.svelte';
+	import FilterList from '$lib/components/filter-list.svelte';
+	import ResetIcon from '$lib/shared/assets/reset.svelte';
 
 	$: channelListLength = $channelsStore.length;
 
-	let isShowingModal;
-	let isAddingChannel;
+	let selectedInterval = null;
+	let selectedList = [];
+
+	let listType = false;
 
 	let allLocations = [];
 	let userBots = [];
 
 	let filterText = '';
 	let filterType = '';
-
-	function changeFilterText(text) {
-		filterText = text;
-	}
-	function changeFilterType(type) {
-		filterType = type;
-	}
-
-	let selectedList = [];
-	let inputText = '';
-
-	let listType = false;
-
-	let modalState = {
-		type: null,
-		idOrIdList: null,
-		selectedInterval: null,
-		formData: { text: '', image: null, contacts: [] }
-	};
 
 	let currentLocation = {
 		parsing_domain: '',
@@ -291,6 +274,29 @@
 		{ key: 'subject', label: 'Тема каналу', value: '' }
 	];
 
+	const changeFilterText = (text) => {
+		filterText = text;
+	};
+	const changeFilterType = (type) => {
+		filterType = type;
+	};
+
+	const changeListType = () => {
+		listType = !listType ? 'unarchived' : false;
+	};
+
+	const updateInputListLocation = (value, type) => {
+		currentLocation = {
+			...currentLocation,
+			[type]: value
+		};
+
+		if (type === 'parsing_domain' && value) fetchLocations();
+		if (type === 'location_id' && value) fetchBots();
+	};
+
+	const selectInterval = (type) => (selectedInterval = type);
+
 	const fetchLocations = async () => {
 		try {
 			const response = await getLocationByLocationGroup(currentLocation.parsing_domain);
@@ -302,10 +308,6 @@
 		} catch (error) {
 			toast.error('Помилка отримання локацій');
 		}
-	};
-
-	const changeListType = () => {
-		listType = !listType ? 'unarchived' : false;
 	};
 
 	const fetchBots = async () => {
@@ -321,7 +323,17 @@
 		}
 	};
 
-	const selectCard = (itemId, isSelected) => {
+	const fetchAllChannels = async () => {
+		const response = await getChannels();
+		if (response.success) {
+			const channels = response.message;
+			channelsStore.setChannels(channels);
+		} else if (!response.success) {
+			channelsStore.setChannels([]);
+		}
+	};
+
+	const handleSelectCard = (itemId, isSelected) => {
 		const newChannel = $channelsStore.find((item) => item.id == itemId);
 
 		if (!newChannel.bot) return;
@@ -331,20 +343,31 @@
 			: selectedList.filter((id) => id !== itemId);
 	};
 
-	const updateNewChannelBot = (bot_id) => {
-		newChannel.bot_id = bot_id;
+	const handleGetChannelsFilteredBy = async () => {
+		try {
+			const obj = { user_id: $userStore.id, filter_key: filterType, filter_value: filterText };
+			const response = await getChannelsFilteredBy(obj);
+
+			if (response.success) {
+				if (response.message && response.message?.length) {
+					channelsStore.setChannels(response.message);
+				} else if (response.message && !response.message?.length) {
+					toast.error(`За значенням "${filterText}" - немає результатів`);
+				}
+			} else {
+				toast.error(`За значенням "${filterText}" - немає результатів`);
+			}
+		} catch (error) {
+			toast.error(`Виникла помилка під час фільтрування каналів`);
+			console.error('Error:', error);
+		} finally {
+			filterText = '';
+			filterType = null;
+		}
 	};
 
-	const updateInputListLocation = (value, type) => {
-		currentLocation = {
-			...currentLocation,
-			[type]: value
-		};
-
-		// if(type === 'parsing_domain' && value === 'avito.ru') playAudio();
-
-		if (type === 'parsing_domain' && value) fetchLocations();
-		if (type === 'location_id' && value) fetchBots();
+	const updateNewChannelBot = (bot_id) => {
+		newChannel.bot_id = bot_id;
 	};
 
 	const updateListAutoState = (idOrIdList, autopost) => {
@@ -357,239 +380,186 @@
 				...channel,
 				autopost,
 				archived: true,
-				autopost_interval: modalState.selectedInterval
+				autopost_interval: selectedInterval
 			});
 		}
 	};
 
-	const updateModalState = (update) => {
-		modalState = { ...modalState, ...update };
-	};
+	const handleDeleteChannel = async (id) => {
+		try {
+			const response = await deleteChannel(id);
+			if (response.success) {
+				channelsStore.removeOne(id);
 
-	const handleToggleAutoPost = (itemId, autopost) => {
-		handleModalState(itemId, 'autopost');
-
-		autopost ? (isShowingModal = !isShowingModal) : updateListAutoState(itemId, autopost);
-	};
-
-	const handlePostAction = (idList, type) => {
-		updateModalState({ idOrIdList: idList, type });
-		isShowingModal = !isShowingModal;
-	};
-
-	const handleInputChange = (text) => {
-		inputText = text;
-	};
-
-	const modalFunctions = {
-		handleFormData: (formData) => updateModalState({ formData }),
-		handleSelectIntervalClick: (type) => updateModalState({ selectedInterval: type }),
-		submitInterval: async () => {
-			if (modalState.selectedInterval && modalState.idOrIdList) {
-				const idOrIdList = modalState.idOrIdList;
-
-				try {
-					const response = await toggleAutoposting(idOrIdList, true, {
-						interval: modalState.selectedInterval
-					});
-
-					if (response.success) {
-						updateListAutoState(idOrIdList, true);
-						isShowingModal = !isShowingModal;
-
-						toast.success(`Автопостинг з інтервалом (${modalState.selectedInterval} хв) додано!`);
-
-						modalFunctions.resetModalStates();
-					} else {
-						toast.error('Перевірте вхідні дані автопостингу');
-					}
-				} catch (error) {
-					toast.error(`Виникла помилка під час додавання автопостингу`);
-					console.error('Error:', error);
-				}
-			}
-		},
-		cancelInterval: () => {
-			isShowingModal = !isShowingModal;
-			modalFunctions.resetModalStates();
-		},
-		submitForm: async () => {
-			if (modalState.idOrIdList && modalState.formData && !Array.isArray(modalState.idOrIdList)) {
-				try {
-					const formData = new FormData();
-					formData.append('text', modalState.formData.text);
-					formData.append('contacts', JSON.stringify(modalState.formData.contacts));
-
-					if (modalState.formData.image) {
-						formData.append('img', modalState.formData.image);
-					}
-
-					fetch(
-						`https://parserdev.duckdns.org/dataserver/autoposting/sendPost/${modalState.idOrIdList}`,
-						{
-							method: 'POST',
-							body: formData
-						}
-					)
-						.then((response) => {
-							if (!response.ok) {
-								if (response.status === 413)
-									throw new Error('Оберіть фото меншного розміру (до 1 мб)');
-
-								throw new Error('Перевірте вхідні дані поста');
-							}
-
-							return response.json();
-						})
-						.then(() => {
-							toast.success('Пост додано!');
-							modalFunctions.cancelForm();
-						})
-						.catch((error) => {
-							toast.error(error.message || 'Помилка при виконанні запиту');
-						});
-				} catch (error) {
-					toast.error('Виникла помилка під час додавання посту');
-					console.error('Error:', error);
-				}
-			}
-		},
-		submitChannelForm: async () => {
-			const obj = {
-				chat_id: parseInt(newChannel.chat_id),
-				title: newChannel.title,
-				username: newChannel.username,
-				subject: newChannel.subject,
-				moderator_id: $userStore.id,
-				location_id: parseInt(currentLocation.location_id),
-				bot_id: parseInt(newChannel.bot_id)
-			};
-
-			try {
-				const response = await addChannel(obj);
-				if (response.success) {
-					channelsStore.addChannel(response.message);
-
-					newChannel = {
-						chat_id: 0,
-						title: '',
-						username: '',
-						subject: '',
-						bot_id: ''
-					};
-
-					currentLocation = {
-						parsing_domain: '',
-						region: '',
-						city: '',
-						location_id: 0
-					};
-
-					isAddingChannel = false;
-
-					toast.success('Новий канал додано!');
-				} else {
-					toast.error('Перевірте вхідні дані каналу');
-				}
-			} catch (error) {
-				toast.error('Виникла помилка під час додавання каналу');
-				console.error('Error:', error);
-			}
-		},
-		deleteChannel: async (id) => {
-			try {
-				const response = await deleteChannel(id);
-				if (response.success) {
-					channelsStore.removeOne(id);
-
-					toast.success('Канал видалено!');
-				} else {
-					toast.error('Виникла помилка під час видалення каналу');
-				}
-			} catch (error) {
+				toast.success('Канал видалено!');
+			} else {
 				toast.error('Виникла помилка під час видалення каналу');
+			}
+		} catch (error) {
+			toast.error('Виникла помилка під час видалення каналу');
+			console.error('Error:', error);
+		}
+	};
+
+	const handleChannelAutoPostOn = async (idOrIdList, newAutoState) => {
+		try {
+			const response = await toggleAutoposting(idOrIdList, newAutoState, {
+				interval: selectedInterval
+			});
+			if (response.success) {
+				updateListAutoState(idOrIdList, newAutoState);
+				toast.success(`Автопостинг з інтервалом (${modalState.selectedInterval} хв) додано!`);
+			} else {
+				toast.error('Перевірте вхідні дані автопостингу');
+			}
+		} catch (error) {
+			toast.error(`Виникла помилка під час додавання автопостингу`);
+			console.error('Error:', error);
+		} finally {
+			selectedInterval = null;
+		}
+	};
+
+	const handleAddNewChannel = async () => {
+		const obj = {
+			chat_id: parseInt(newChannel.chat_id),
+			title: newChannel.title,
+			username: newChannel.username,
+			subject: newChannel.subject,
+			moderator_id: $userStore.id,
+			location_id: parseInt(currentLocation.location_id),
+			bot_id: parseInt(newChannel.bot_id)
+		};
+
+		try {
+			const response = await addChannel(obj);
+			if (response.success) {
+				channelsStore.addChannel(response.message);
+
+				newChannel = {
+					chat_id: 0,
+					title: '',
+					username: '',
+					subject: '',
+					bot_id: ''
+				};
+
+				currentLocation = {
+					parsing_domain: '',
+					region: '',
+					city: '',
+					location_id: 0
+				};
+
+				toast.success('Новий канал додано!');
+			} else {
+				toast.error('Перевірте вхідні дані каналу');
+			}
+		} catch (error) {
+			toast.error('Виникла помилка під час додавання каналу');
+			console.error('Error:', error);
+		}
+	};
+
+	const handleHandPost = (id, formData) => {
+		if (id && formData.contacts?.length && formData.text && formData.image) {
+			try {
+				const formData = new FormData();
+				formData.append('text', formData.text);
+				formData.append('contacts', JSON.stringify(formData.contacts));
+				if (formData.image) {
+					formData.append('img', formData.image);
+				}
+				fetch(`https://parserdev.duckdns.org/dataserver/autoposting/sendPost/${id}`, {
+					method: 'POST',
+					body: formData
+				})
+					.then((response) => {
+						if (!response.ok) {
+							if (response.status === 413)
+								throw new Error('Оберіть фото меншного розміру (до 1 мб)');
+							throw new Error('Перевірте вхідні дані поста');
+						}
+						return response.json();
+					})
+					.then(() => {
+						toast.success('Пост додано!');
+					})
+					.catch((error) => {
+						toast.error(error.message || 'Помилка при виконанні запиту');
+					});
+			} catch (error) {
+				toast.error('Виникла помилка під час додавання посту');
 				console.error('Error:', error);
 			}
-		},
-		cancelForm: () => {
-			isShowingModal = !isShowingModal;
-			modalFunctions.resetModalStates();
-		},
-		resetModalStates: () => {
-			handleModalState(null, null);
-			modalFunctions.handleFormData({ text: '', image: null, contacts: [] });
-			modalFunctions.handleSelectIntervalClick(null);
 		}
 	};
 
 	onMount(async () => {
 		if (!$channelsStore.length) {
-			// const response = await getChannels();
-
-			// if (response.success) {
-			// 	const channels = response.message;
-			// 	// @ts-ignore
-			// 	channelsStore.setChannels(channels);
-			// } else if (!response.success) {
-			// 	channelsStore.setChannels([]);
-			// }
-			channelsStore.setChannels(channels);
+			await fetchAllChannels();
+			// channelsStore.setChannels(channels);
 		}
 
 		if (!$locationGroupsStore.length) {
-			// const response = await getAllLocationGroups();
+			const response = await getAllLocationGroups();
 
-			// if (response.success) {
-			// 	const location_groups = response.message;
-			// 	// @ts-ignore
-			// 	locationGroupsStore.setLocationGroups(location_groups);
-			// } else if (!response.success) {
-			locationGroupsStore.setLocationGroups([]);
-			// }
+			if (response.success) {
+				const location_groups = response.message;
+				// @ts-ignore
+				locationGroupsStore.setLocationGroups(location_groups);
+			} else if (!response.success) {
+				locationGroupsStore.setLocationGroups([]);
+			}
 		}
 	});
 </script>
 
 <Toaster />
 <div class="relative flex flex-col items-center justify-center gap-2">
-	<Toolbar
-		{selectedList}
-		onAutoPostList={handlePostAction}
-		type={'main'}
-		{inputText}
-		onInputChange={handleInputChange}
-	/>
+	<Toolbar {selectedList} toggleChannelsAutoPost={handleChannelAutoPostOn} type={'main'} />
 	<div class="flex flex-row gap-2">
 		<PageTitle title="Всі канали" />
 	</div>
 	{#if channelListLength}
 		<div class="flex flex-row gap-2">
-			<FilterList {filterText} {filterType} {changeFilterText} {changeFilterType} />
+			<button
+				on:click={fetchAllChannels}
+				class={`cursor-pointer rounded-lg border border-zinc-500 bg-zinc-600 p-1 hover:bg-zinc-500 ${!filterText && !filterType ? 'opacity-50' : ''}`}
+				disabled={!filterText && !filterType}
+			>
+				<ResetIcon />
+			</button>
+			<FilterList
+				onFilterList={handleGetChannelsFilteredBy}
+				{filterText}
+				{filterType}
+				{changeFilterText}
+				{changeFilterType}
+			/>
 			<SwitchListType type={listType} {changeListType} />
 		</div>
 		<CardList
-			{selectCard}
-			deleteCard={modalFunctions.deleteChannel}
+			selectChannel={handleSelectCard}
+			deleteChannel={handleDeleteChannel}
+			toggleChannelAutoPost={handleChannelAutoPostOn}
+			onHandPost={handleHandPost}
 			list={$channelsStore}
 			{selectedList}
-			{handleToggleAutoPost}
-			{handlePostAction}
-			{filterText}
-			{filterType}
+			{selectedInterval}
+			onSelectInterval={selectInterval}
 			type={listType}
 		/>
 	{/if}
-	<div class="fixed bottom-4 right-5">
-		<ModalAddChannel
-			locationGroupList={$locationGroupsStore}
-			{currentLocation}
-			{allLocations}
-			{userBots}
-			{updateInputListLocation}
-			{updateNewChannelBot}
-			{newChannel}
-			{channelInputlist}
-			{modalFunctions}
-		/>
-	</div>
+	<ModalAddChannel
+		locationGroupList={$locationGroupsStore}
+		{currentLocation}
+		{allLocations}
+		{userBots}
+		{updateInputListLocation}
+		{updateNewChannelBot}
+		{newChannel}
+		{channelInputlist}
+		{handleAddNewChannel}
+	/>
 </div>

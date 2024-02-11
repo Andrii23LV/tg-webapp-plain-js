@@ -9,59 +9,53 @@
 	import ErrorContainer from '$lib/shared/error-container.svelte';
 	import { userStore } from '$lib/stores';
 	import { locationGroupsStore } from '$lib/stores';
-	// import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 
-	export let userData = {
-		user: {
-			id: 1,
-			user_id: 822685700,
-			username: 'apple_time_ua',
-			first_name: 'O',
-			last_name: '',
-			language_code: 'uk'
-		},
-		location_groups: [
-			{
-				location_group_id: 1,
-				parsing_domain: 'work.ua',
-				country: 'UA'
-			},
-			{
-				location_group_id: 2,
-				parsing_domain: 'avito.ru',
-				country: 'RU'
-			}
-		]
-	};
+	let userData = null;
+
+	// export let userData = {
+	// 	user: {
+	// 		id: 1,
+	// 		user_id: 822685700,
+	// 		username: 'apple_time_ua',
+	// 		first_name: 'O',
+	// 		last_name: '',
+	// 		language_code: 'uk'
+	// 	},
+	// 	location_groups: [
+	// 		{
+	// 			location_group_id: 1,
+	// 			parsing_domain: 'work.ua',
+	// 			country: 'UA'
+	// 		},
+	// 		{
+	// 			location_group_id: 2,
+	// 			parsing_domain: 'avito.ru',
+	// 			country: 'RU'
+	// 		}
+	// 	]
+	// };
 
 	onMount(async () => {
-		// const { WebApp } = window.Telegram || {};
+		const { WebApp } = window.Telegram || {};
 
-		// if (WebApp?.initDataUnsafe?.start_param) {
-		// 	let startParam = WebApp.initDataUnsafe.start_param;
-		// 	goto(`/contacts/?id=${startParam}`);
-		// } else {
-		// 	try {
-		// 		const response = await initializeTelegramUser(WebApp);
-		// 		if (response.success) {
-		// 			userData = response.message;
+		if (WebApp?.initDataUnsafe?.start_param) {
+			let startParam = WebApp.initDataUnsafe.start_param;
+			goto(`/contacts/?id=${startParam}`);
+		} else {
+			try {
+				const response = await initializeTelegramUser(WebApp);
+				if (response.success) {
+					userData = response.message;
 
-		userStore.setUser(userData.user);
-		locationGroupsStore.setLocationGroups(userData.location_groups);
-
-		// const obj = {
-		// 	user_id: userData.user.id,
-		// 	filter_key: 'city',
-		// 	filter_value: 'Львів'
-		// };
-
-		// await getChannelsFilteredBy(obj);
-		// }
-		// 	} catch (error) {
-		// 		toast.error(`Виникла помилка під час ініціалізації користувача`);
-		// 		console.error('Error:', error);
-		// 	}
-		// }
+					userStore.setUser(userData.user);
+					locationGroupsStore.setLocationGroups(userData.location_groups);
+				}
+			} catch (error) {
+				toast.error(`Виникла помилка під час ініціалізації користувача`);
+				console.error('Error:', error);
+			}
+		}
 	});
 </script>
 

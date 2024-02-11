@@ -3,10 +3,10 @@
 	export let handleDeleteContact;
 </script>
 
-<div class="flex flex-wrap">
+<div class="flex flex-wrap gap-1">
 	{#each contacts as contact, index}
 		<div
-			class="mb-1 flex items-center justify-between gap-2 rounded-full border bg-zinc-500 p-1 px-2 text-xs"
+			class="flex items-center justify-between gap-2 rounded-full border bg-zinc-500 p-1 px-2 text-xs"
 		>
 			<p class="font-bold text-zinc-800">
 				{contact.name}:
