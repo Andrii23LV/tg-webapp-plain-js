@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--background: 0 0% 100%;
+		--foreground: 240 10% 3.9%;
+		--card: 0 0% 100%;
+		--card-foreground: 240 10% 3.9%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 240 10% 3.9%;
+		--primary: 142.1 76.2% 36.3%;
+		--primary-foreground: 355.7 100% 97.3%;
+		--secondary: 240 4.8% 95.9%;
+		--secondary-foreground: 240 5.9% 10%;
+		--muted: 240 4.8% 95.9%;
+		--muted-foreground: 240 3.8% 46.1%;
+		--accent: 240 4.8% 95.9%;
+		--accent-foreground: 240 5.9% 10%;
+		--destructive: 0 72.22% 50.59%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 240 5.9% 90%;
+		--input: 240 5.9% 90%;
+		--ring: 142.1 76.2% 36.3%;
+		--radius: 0.4rem;
+	}
+	.dark {
+		--background: 20 14.3% 4.1%;
+		--foreground: 0 0% 95%;
+		--card: 24 9.8% 10%;
+		--card-foreground: 0 0% 95%;
+		--popover: 0 0% 9%;
+		--popover-foreground: 0 0% 95%;
+		--primary: 142.1 70.6% 45.3%;
+		--primary-foreground: 144.9 80.4% 10%;
+		--secondary: 240 3.7% 15.9%;
+		--secondary-foreground: 0 0% 98%;
+		--muted: 0 0% 15%;
+		--muted-foreground: 240 5% 64.9%;
+		--accent: 12 6.5% 15.1%;
+		--accent-foreground: 0 0% 98%;
+		--destructive: 0 62.8% 30.6%;
+		--destructive-foreground: 0 85.7% 97.3%;
+		--border: 240 3.7% 15.9%;
+		--input: 240 3.7% 15.9%;
+		--ring: 142.4 71.8% 29.2%;
+	}
+}
+
+@layer base {
+	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-gradient-to-t from-stone-900 to-zinc-800;
+	}
+}
+
+:global(:root) {
+	/* --background-main: 255, 255, 255; */
+	/* --background-main: var(--background); */
+}
+
+/* body {
+	background-color: #141414;
+	/* background-image: var(--background); 
+} */
+
+.channelCard {
+	@apply h-fit w-full min-w-[350px] max-w-[95vw];
+}
+
+/* Selected Channel Card Styles */
+.channelCardSelected {
+	@apply h-fit w-full min-w-[350px] max-w-[95vw] rounded-md border border-zinc-400 bg-gradient-to-tl from-zinc-400 to-zinc-400/60;
+}
+
+.submit {
+	@apply flex h-[42px] flex-row items-center justify-center gap-2 rounded bg-zinc-200 p-2 px-3 text-sm font-semibold text-zinc-900;
+}
+
+.cancel {
+	@apply flex h-[42px] flex-row items-center justify-center gap-2 rounded border border-zinc-200 bg-transparent p-2 px-3 text-sm font-semibold text-zinc-200;
+}
+
+.delete {
+	@apply flex h-[42px] flex-row items-center justify-center gap-2 rounded bg-red-300 p-2 px-3 text-sm font-semibold text-zinc-700 shadow;
+}
+
+.submit-active {
+	@apply flex h-[42px] flex-row items-center justify-center gap-2 rounded bg-green-300 p-2 px-3 text-sm font-semibold text-zinc-700 shadow;
+}
+
+.rounded-submit {
+	@apply flex h-10 w-10 flex-row items-center justify-center gap-2 rounded-full bg-zinc-700 p-2 text-lg font-semibold text-zinc-200 shadow;
+}
+
+.disabled {
+	@apply opacity-50;
+}
+
+.modal-wrapper {
+	@apply absolute bottom-0 left-0 right-0 top-0 z-10 flex min-h-full w-full items-center justify-center bg-black bg-opacity-70;
+}
+
+.modal {
+	@apply relative z-20 w-[600px] min-w-[350px] max-w-[95vw] rounded-md border border-zinc-900 bg-zinc-700 p-2;
+}
+
+.toolbar-input {
+	@apply block w-[95vw] max-w-[500px] rounded-lg border border-zinc-300 bg-zinc-50 p-2 text-sm text-zinc-900 focus:border-green-500 focus:ring-green-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-400 dark:focus:border-green-500 dark:focus:ring-green-500;
+}
+
+.new-channel-textarea {
+	@apply min-h-[300px] w-[90vw] max-w-[500px] rounded-lg border border-zinc-300 p-2 text-sm text-zinc-900;
+}
+
+.active-link {
+	@apply mt-1 rounded-lg border-t-2 border-t-green-500;
+}
+
+.text-gradient-green {
+	@apply from-primary bg-gradient-to-r to-green-700 bg-clip-text;
+}
